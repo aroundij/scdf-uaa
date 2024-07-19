@@ -1,0 +1,91 @@
+# Configuration for Spring Cloud Data Flow server
+spring:
+  profiles:
+    active: "postgresql,default"
+  datasource:
+    url: ${BDD_URL}
+    driver-class-name: org.postgresql.Driver
+    username: ${BDD_USER}
+    password: ${BDD_PASSWORD}
+  security:
+    oauth2:
+      client:
+        registration:
+          uaa:
+            provider: uaa
+            client-id: dataflow
+            client-secret: d@t@fl0w
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: "openid,dataflow.create,dataflow.deploy,dataflow.destroy,dataflow.manage,dataflow.modify,dataflow.schedule,dataflow.view"
+          api:
+            provider: uaa
+            client-id: dataflow
+            client-secret: d@t@fl0w
+            authorization-grant-type: client_credentials
+            scope: "openid,dataflow.create,dataflow.deploy,dataflow.destroy,dataflow.manage,dataflow.modify,dataflow.schedule,dataflow.view"
+        provider:
+          uaa:
+            token-uri: http://localhost:8080/oauth/token
+            jwk-set-uri: http://localhost:8080/token_keys
+            user-info-uri: http://localhost:8080/userinfo
+            user-name-attribute: user_name
+            authorization-uri: http://localhost:8080/oauth/authorize
+      resource-server:
+        opaque-token:
+          introspection-uri: http://localhost:8080/introspect
+          client-id: dataflow
+          client-secret: d@t@fl0w
+  cloud:
+    dataflow:
+      features:
+        analytics-enabled: false
+        schedules-enabled: false
+        streams-enabled: false
+        tasks-enabled: true
+        audit-enabled: true
+      security:
+        authorization:
+          defaultProviderId: uaa
+          provider-role-mappings:
+            uaa:
+              map-oauth-scopes: true
+              role-mappings:
+                ROLE_CREATE: dataflow.create
+                ROLE_DEPLOY: dataflow.deploy
+                ROLE_DESTROY: dataflow.destroy
+                ROLE_MANAGE: dataflow.manage
+                ROLE_MODIFY: dataflow.modify
+                ROLE_SCHEDULE: dataflow.schedule
+                ROLE_VIEW: dataflow.view
+
+logging:
+  level:
+    root: INFO
+    org:
+      apache:
+        http: DEBUG
+      springframework:
+        security: TRACE
+
+server:
+  servlet:
+    session:
+      cookie:
+        name: SCDFSESSIONID
+  error:
+    whitelabel:
+      enabled: false
+
+maven:
+  localRepository: mylocal
+  useRemoteRepositories: false
+  remote-repositories:
+    repo1:
+      url: http://localhost:8081/repository/maven-releases/
+      snapshot-policy:
+        update-policy: daily
+        checksum-policy: warn
+      release-policy:
+        update-policy: never
+        checksum-policy: fail

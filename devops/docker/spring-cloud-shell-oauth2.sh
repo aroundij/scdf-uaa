@@ -1,0 +1,1 @@
+java -jar spring-cloud-dataflow-shell-2.11.3.jar --dataflow.username=dataflow --dataflow.password=d@t@fl0w --spring.shell.commandFile=./scdf_shell/scdf-shell.shell

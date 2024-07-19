@@ -1,0 +1,13 @@
+# Maven configuration for Spring Cloud Data Flow server
+maven:
+  localRepository: mylocal
+  useRemoteRepositories: true
+  remote-repositories:
+    repo1:
+      url: http://nexus:8081/repository/maven-releases/
+      snapshot-policy:
+        update-policy: daily
+        checksum-policy: warn
+      release-policy:
+        update-policy: never
+        checksum-policy: fail

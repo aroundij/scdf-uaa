@@ -1,0 +1,54 @@
+# Generate a spring cloud data flow server with a postgresql database and uaa oauth2 server
+services:
+  scdf-server:
+    user: root
+    hostname: scdf-server
+    image: springcloud/spring-cloud-dataflow-server:2.11.3-jdk17
+    ports:
+      - "9393:9393"
+    environment:
+      - JDK_JAVA_OPTIONS= -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -DXmx=1024m
+      - SPRING_CONFIG_ADDITIONAL_LOCATION=/home/cnb/scdf/scdf-config.yml
+    depends_on:
+      - scdf-postgres
+    network_mode: host
+    volumes:
+      - ./scdf:/home/cnb/scdf:Z
+      - /home/ayoub/data/docker/scdf/logs:/tmp:Z
+      - /home/ayoub/data/docker/scdf/repo:/workspace/mylocal:Z
+
+  scdf-postgres:
+    hostname: scdf-postgres
+    image: postgres:12
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=scdf
+      - POSTGRES_USER=scdf
+      - POSTGRES_PASSWORD=scdf
+    network_mode: host
+
+  # Nexux Repository Manager
+  nexus:
+    user: nexus
+    hostname: nexus
+    image: sonatype/nexus3:3.35.0
+    ports:
+      - "8081:8081"
+    network_mode: host
+    volumes:
+      - /data/nexus-data:/nexus-data:Z
+
+  # minimal uaa server with in-memory database with default user
+  uaa:
+    hostname: uaa
+    image: cloudfoundry/uaa:77.12.0
+    ports:
+      - "8080:8080"
+    network_mode: host
+    environment:
+      - UAA_CONFIG_PATH=/workspace/config
+    volumes:
+      - ./uaa/uaa.yml:/workspace/config/uaa.yml:Z
+      - ./uaa/log4j2.properties:/workspace/WEB-INF/classes/log4j2.properties:Z
+

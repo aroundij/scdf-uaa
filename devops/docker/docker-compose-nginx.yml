@@ -1,0 +1,79 @@
+# Generate a spring cloud data flow server with a postgresql database and uaa oauth2 server
+services:
+  scdf-server:
+    user: root
+    hostname: scdf-server
+    container_name: scdf-server
+    image: springcloud/spring-cloud-dataflow-server:2.11.3-jdk17
+    environment:
+      - JDK_JAVA_OPTIONS=-Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -DXmx=1024m
+      - SPRING_PROFILES_ACTIVE=postgresql,default
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://scdf-postgres:5432/scdf
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+      - SPRING_DATASOURCE_USERNAME=scdf
+      - SPRING_DATASOURCE_PASSWORD=scdf
+      - SPRING_CLOUD_DATAFLOW_FEATURES_ANALYTICS_ENABLED=false
+      - SPRING_CLOUD_DATAFLOW_FEATURES_SCHEDULES_ENABLED=false
+      - SPRING_CLOUD_DATAFLOW_FEATURES_STREAMS_ENABLED=false
+      - SPRING_CLOUD_DATAFLOW_FEATURES_TASKS_ENABLED=true
+      - SPRING_CLOUD_DATAFLOW_FEATURES_AUDIT_ENABLED=true
+      - SPRING_CONFIG_ADDITIONAL_LOCATION=/home/cnb/scdf/maven-nginx.yml
+      - SERVER_SERVLET_SESSION_COOKIE_NAME=SCDF_SESSION
+    depends_on:
+      - scdf-postgres
+    networks:
+        - scdf
+    volumes:
+      - ./scdf:/home/cnb/scdf:Z
+
+  scdf-postgres:
+    hostname: scdf-postgres
+    image: postgres:12
+    container_name: scdf-postgres
+    environment:
+      - POSTGRES_DB=scdf
+      - POSTGRES_USER=scdf
+      - POSTGRES_PASSWORD=scdf
+    networks:
+        - scdf
+
+  # Nexux Repository Manager
+  nexus:
+    user: nexus
+    hostname: nexus
+    container_name: nexus
+    image: sonatype/nexus3:3.35.0
+    ports:
+      - "8081:8081"
+    volumes:
+      - /data/nexus-data:/nexus-data:Z
+    networks:
+        - scdf
+
+  # nginx server with a username and password for basic authentication to scdf-server
+  nginx:
+    user: root
+    hostname: nginx
+    container_name: nginx
+    image: nginx:1.21.3
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx:/etc/nginx:Z
+    networks:
+      - scdf
+  # spring cloud data flow shell
+  scdf-shell:
+      container_name: scdf-shell
+      user: root
+      hostname: scdf-shell
+      image: springcloud/spring-cloud-dataflow-shell:2.11.3
+      environment:
+        - SPRING_CLOUD_DATAFLOW_SERVER_URI=http://scdf-server:9393
+      networks:
+        - scdf
+networks:
+  scdf:
+    name: scdf
+    driver: bridge
+
